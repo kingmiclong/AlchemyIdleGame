@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dwarf Alchemy</title>
+
+<script src="jquery-1.11.2.min.js"></script>
+<script src="input_output.js"></script>
+<script src="mathUtil.js"></script>
+<script src="narrativeManager.js"></script>
+<script src="incremental.js"></script>
+<script src="statAnalysis.js"></script>
+<script>
+  function clearMonsterStats() {
+    document.getElementById('monsterStats').innerHTML = '';
+    document.getElementById('fightResult').innerHTML = '';
+  }
+</script>
+<style>
+.selected {
+  color: red;
+  background-color: #beef;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;  /* Distribute space evenly */
+}
+
+.sidebar {
+  flex: 1;
+  width: 15%;
+}
+
+#reports {
+  overflow-y: scroll; 
+  border: 1px solid black; 
+  height: 100vh; 
+  width: 30%;
+  flex: 1;
+}
+
+.content {
+  flex: 3;
+  width: 40%;
+} 
+
+#statsDisplay > div {
+    margin-bottom: 10px;
+}
+
+#panel2 button {
+  display: block;
+  width: 25%;
+  margin-bottom: 10px; /* spacing between buttons */
+}
+
+.box {
+  width: 300px;
+  height: 300px;
+  border: 2px solid black;
+  display: inline-block;
+  vertical-align: top;
+  text-align: center;
+  line-height: 300px;
+  margin: 10px;
+  background-color: #f0f0f0;
+}
+.upgrade-button {
+  width: 200px; /* Or any other value that suits your design */
+}
+
+.upgrade-set {
+    display: flex;
+    align-items: center;
+}
+
+.upgrade-button, .upgrade-cost {
+    display: inline-block;
+    margin-right: 10px;
+}
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <div id="stats" class="sidebar">
+      <h2>Stats</h2> <!-- This is the new line -->
+        <div id="statsDisplay">
+        <div id="health">
+          <span id="healthName">Health: </span><span id="healthStat"></span>
+        </div>
+        <div id="attack">
+          <span id="attackName">Attack: </span><span id="attackStat"></span>
+        </div>
+        <div id="defense">
+          <span id="defenseName">Defense: </span><span id="defenseStat"></span>
+        </div>
+        <div id="stamina">
+          <span id="staminaName">Stamina: </span><span id="staminaStat"></span>
+        </div>
+        <div id="luck">
+          <span id="luckName">Luck: </span><span id="luckStat"></span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div id="stage1" style="z-index: 1">
+      <h1><span id="era">Dwarves Age(A little from Hobbit)</span></h1>
+      <button onclick="game.swichPanels('panel1')" id="showPanel1">Panel 1</button>
+      <button onclick="game.swichPanels('panel2')" id="showPanel2">Panel 2</button>
+      <button onclick="game.swichPanels('panel3')" id="showPanel3">Panel 3</button>
+      <div class="panel" id="panel1" style="display: block;">
+        <table>
+          <tr>
+            <td id="resource1Name"></td>
+            <td></td>
+            <td class="resource1Number"></td>
+            <td><button id="resource1Button" onclick="game.gainResource1()">Mining Bronze</button></td>
+            <span class="upgrade-cost">Alchemy, you get some, you lose some!!!</span>
+          </tr>
+          <tr id="resource2Row" style="display: none;">
+            <td id="resource2Name"></td>
+            <td></td>
+            <td class="resource2Number"></td>
+            <td><button id="resource2Button" onclick="game.gainResource2()">Collect Silver</button></td>
+            <td><button id="exchangeResource1ToResource2" onclick="game.exchangeResource1ToResource2()">Exchange 50 Bronze to 10 Silver</button></td>
+            <td><button id="exchangeResource1ToResource2Bulk" onclick="game.exchangeResource1ToResource2Bulk()">Exchange 100 Bronze to 20 Silver</button></td>
+          </tr>
+          <tr id="resource3Row" style="display: none;">
+            <td id="resource3Name"></td>
+            <td></td>
+            <td class="resource3Number"></td>
+            <td><button id="resource3Button" onclick="game.gainResource3()">Collect Gold</button></td>
+            <td><button id="exchangeResource2ToResource3" onclick="game.exchangeResource2ToResource3()">Exchange 50 Silver to 10 Gold</button></td>
+            <td><button id="exchangeResource1ToResource3Bulk" onclick="game.exchangeResource2ToResource3Bulk()">Exchange 100 Silver to 20 Gold</button></td>
+          </tr>
+          <tr id="resource4Row" style="display: none;">
+            <td id="resource4Name"></td>
+            <td></td>
+            <td class="resource4Number"></td>
+            <td><button id="resource4Button" onclick="game.gainResource4()">Collect Platinum</button></td>
+            <td><button id="exchangeResource3ToResource4" onclick="game.exchangeResource3ToResource4()">Exchange 50 Gold to 10 Platinum</button></td>
+            <td><button id="exchangeResource1ToResource4Bulk" onclick="game.exchangeResource3ToResource4Bulk()">Exchange 100 Gold to 20 Platinum</button></td>
+          </tr>
+          <tr id="resource5Row" style="display: none;">
+            <td id="resource5Name"></td>
+            <td></td>
+            <td class="resource5Number"></td>
+            <td><button id="resource5Button" onclick="game.gainResource5()">Collect Diamond</button></td>
+            <td><button id="exchangeResource4ToResource5" onclick="game.exchangeResource4ToResource5()">Exchange 50 Platinum to 10 Diamond</button></td>
+            <td><button id="exchangeResource1ToResource5Bulk" onclick="game.exchangeResource4ToResource5Bulk()">Exchange 100 Platinum to 20 Diamond</button></td>
+          </tr>
+          </table>
+
+        </div>
+        
+        <div class="panel" id="panel2" style="display: none;">
+          <h1>Upgrades on your stats</h1>
+          <div id="upgradeSection"> 
+            <button onclick="game.upgrade('health')">Upgrade Health</button>
+            <button onclick="game.upgrade('attack')">Upgrade Attack</button>
+            <button onclick="game.upgrade('defense')">Upgrade Defense</button>
+            <button onclick="game.upgrade('stamina')">Upgrade Stamina</button>
+            <button onclick="game.upgrade('luck')">Upgrade Luck</button>
+
+            <h1>Upgrades on the mining speed</h1>
+            <div class="upgrade-set">
+              <button class="upgrade-button" onclick="game.upgradeResource1()">Upgrade Bronze Cost: 10 Silver each upgrade</button>
+          </div>
+            <button class="upgrade-button" onclick="game.upgradeResource2()">Upgrade Silver Cost: 20 Gold each upgrade</button>
+            <button class="upgrade-button" onclick="game.upgradeResource3()">Upgrade Gold Cost: 40 Platinum each upgrade</button>
+            <button class="upgrade-button" onclick="game.upgradeResource4()">Upgrade Platinum Cost: 30 Diamonds each upgrade</button>
+            <button class="upgrade-button" onclick="game.upgradeResource5()">Upgrade Diamond Cost: 100 Diamonds each upgrade</button>
+          </div>
+          
+        </div>
+
+        <div class="panel" id="panel3" style="display: none;">
+          <h1>Mini RPG Game</h1>
+          <div id="playerBox" class="box">
+            <img id="playerImage" src="player.png">
+          </div>
+          <div id="monsterBox" class="box">
+            <img id="monsterImage" src="monster.png" style="display: none;">
+          </div>
+          <button id="generateMonsterButton" onclick="clearMonsterStats(); game.generateMonster();">Generate Monster</button>
+          <div id="monsterStats"></div>
+          <button id="fightMonster" onclick="game.fightMonster()" style="display: none;">Fight Monster</button>
+          <div id="fightResult"></div>
+        </div>
+
+        <!-- Delete the following 2 stages if you are only doing panels -->
+        <div class="stage" id="stage2" style="display: none;">
+          <h1>Stage 2</h1>
+          <h2>Subtitle</h2>
+        </div>
+
+        <div class="panel" id="panel2-1" style="display: none;">
+        </div>
+
+        <div class="stage" id="stage3" style="display: none;">
+          <h1>Stage 3</h1>
+          <h2>Subtitle</h2>
+        </div>
+
+        <div class="panel" id="panel3-1" style="display: none;">
+        </div>
+      </div>
+      </div>
+      <div id="reports" class="sidebar">Reports</div>
+      <button id="resetButton" onclick="resetGame()">Reset Game</button>
+      </div>
+      </body>
+      </html>
